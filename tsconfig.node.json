@@ -1,22 +1,18 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": ["ES2023"],
-    "module": "ESNext",
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-
-    /* Linting */
-    "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "target": "ES2022",  // Transpile to ES2022 syntax for backend compatibility
+    "lib": ["ES2023"],  // Use the ES2023 library for the latest ECMAScript features
+    "module": "ESNext",  // Use ESNext for module system (modern JavaScript)
+    "skipLibCheck": true,  // Skip type checking of declaration files
+    "moduleResolution": "bundler",  // Bundler mode for module resolution
+    "allowImportingTsExtensions": true,  // Allow importing TypeScript files with .ts extensions
+    "isolatedModules": true,  // Ensure all files are treated as isolated modules (e.g., for compatibility with bundlers)
+    "moduleDetection": "force",  // Force module detection even if there's no `export` or `import`
+    "noEmit": true,  // Don't emit any files (used when running with a bundler like Vite)
+    "strict": true,  // Enable all strict type-checking options
+    "noUnusedLocals": true,  // Report unused locals
+    "noUnusedParameters": true,  // Report unused parameters
+    "noFallthroughCasesInSwitch": true  // Disallow fall-through in switch cases
   },
-  "include": ["vite.config.ts"]
+  "include": ["server/**/*", "vite.config.ts"]  // Include backend-related files like server and vite configuration
 }
