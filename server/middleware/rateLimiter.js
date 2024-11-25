@@ -1,7 +1,6 @@
 import rateLimit from 'express-rate-limit';
 import { logger } from '../utils/logger.js';
 
-// Helper to create a limiter with logging
 const createLimiter = (options) => {
   return rateLimit({
     ...options,
@@ -14,22 +13,19 @@ const createLimiter = (options) => {
   });
 };
 
-// Auth endpoints limiter
 export const authLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // 5 requests per window
-  skipSuccessfulRequests: true // Only count failed attempts
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  skipSuccessfulRequests: true
 });
 
-// General API limiter
 export const apiLimiter = createLimiter({
   windowMs: 15 * 60 * 1000,
   max: 100
 });
 
-// Specific endpoint limiters
 export const appointmentsLimiter = createLimiter({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 60 * 1000,
   max: 20
 });
 
