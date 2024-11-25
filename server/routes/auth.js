@@ -1,14 +1,12 @@
 import express from 'express';
 import { body } from 'express-validator';
 import { validateRequest } from '../middleware/validateRequest.js';
-import { ipBlocker } from '../middleware/ipBlocker.js';
-import { refreshTokenMiddleware } from '../middleware/refreshToken.js';
-import { auth } from '../middleware/auth.js';
 import * as authController from '../controllers/authController.js';
+import { rateLimiter } from '../middleware/rateLimiter.js';
 
 const router = express.Router();
 
-// Register endpoint
+// Register
 router.post(
   '/register',
   [
@@ -16,32 +14,38 @@ router.post(
     body('password')
       .isLength({ min: 8 })
       .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
-      .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+      .withMessage('Password must contain uppercase, lowercase, number and special character'),
     body('name').trim().notEmpty()
   ],
   validateRequest,
   authController.register
 );
 
-// Login endpoint
+// Verify Email
+router.get('/verify/:token', authController.verifyEmail);
+
+// Request Password Reset
 router.post(
-  '/login',
-  ipBlocker,
-  [
-    body('email').isEmail().normalizeEmail(),
-    body('password').notEmpty(),
-    body('twoFactorCode').optional().isLength({ min: 6, max: 6 })
-  ],
+  '/password-reset-request',
+  rateLimiter,
+  [body('email').isEmail().normalizeEmail()],
   validateRequest,
-  authController.login
+  authController.requestPasswordReset
 );
 
-// Refresh token endpoint
-router.post('/refresh-token', refreshTokenMiddleware);
+// Reset Password
+router.post(
+  '/password-reset/:token',
+  [
+    body('password')
+      .isLength({ min: 8 })
+      .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+  ],
+  validateRequest,
+  authController.resetPassword
+);
 
-// 2FA endpoints (all require authentication)
-router.post('/2fa/setup', auth, authController.setup2FA);
-router.post('/2fa/verify', auth, authController.verify2FA);
-router.post('/2fa/disable', auth, authController.disable2FA);
+// Refresh Token
+router.post('/refresh-token', authController.refreshToken);
 
 export default router;
