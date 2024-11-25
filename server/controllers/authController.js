@@ -1,46 +1,59 @@
 import jwt from 'jsonwebtoken';
-import speakeasy from 'speakeasy';
+import crypto from 'crypto';
 import User from '../models/User.js';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../utils/email.js';
-import { generateTokens, generateToken } from '../utils/token.js';
 import { logger } from '../utils/logger.js';
 
-export const register = async (req, res, next) => {
+// Generate tokens
+const generateTokens = (userId) => {
+  const accessToken = jwt.sign(
+    { userId },
+    process.env.JWT_SECRET,
+    { expiresIn: '15m' }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: '7d' }
+  );
+
+  return { accessToken, refreshToken };
+};
+
+// Register
+export const register = async (req, res) => {
   try {
     const { email, password, name } = req.body;
 
-    // Check if user already exists
+    // Check if user exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'Email already registered' });
     }
 
     // Create verification token
-    const verificationToken = generateToken();
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
 
-    // Create new user
+    // Create user
     const user = new User({
       email,
       password,
       name,
-      verificationToken
+      verificationToken,
+      verificationExpires
     });
 
     await user.save();
 
     // Generate tokens
     const { accessToken, refreshToken } = generateTokens(user._id);
-
-    // Save refresh token
     user.refreshToken = refreshToken;
     await user.save();
 
     // Send verification email
-    try {
-      await sendVerificationEmail(email, verificationToken);
-    } catch (error) {
-      logger.error('Failed to send verification email:', error);
-    }
+    await sendVerificationEmail(email, verificationToken);
 
     res.status(201).json({
       accessToken,
@@ -49,162 +62,115 @@ export const register = async (req, res, next) => {
         id: user._id,
         email: user.email,
         name: user.name,
-        twoFactorEnabled: user.twoFactorEnabled
+        isVerified: user.isVerified
       }
     });
   } catch (error) {
-    next(error);
+    logger.error('Registration error:', error);
+    res.status(500).json({ message: 'Registration failed' });
   }
 };
 
-export const login = async (req, res, next) => {
+// Verify Email
+export const verifyEmail = async (req, res) => {
   try {
-    const { email, password, twoFactorCode } = req.body;
+    const { token } = req.params;
+    
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationExpires: { $gt: Date.now() }
+    });
 
-    // Find user
-    const user = await User.findOne({ email });
     if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+      return res.status(400).json({ message: 'Invalid or expired verification token' });
     }
 
-    // Check if account is locked
-    if (user.isLocked()) {
-      const lockTime = Math.ceil((user.lockUntil - Date.now()) / 1000 / 60);
-      return res.status(423).json({
-        message: `Account is locked. Try again in ${lockTime} minutes`
-      });
-    }
-
-    // Check password
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      await user.incrementLoginAttempts();
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    // Verify 2FA if enabled
-    if (user.twoFactorEnabled) {
-      if (!twoFactorCode) {
-        return res.status(403).json({
-          message: '2FA code required',
-          requires2FA: true
-        });
-      }
-
-      const isValid = speakeasy.totp.verify({
-        secret: user.twoFactorSecret,
-        encoding: 'base32',
-        token: twoFactorCode
-      });
-
-      if (!isValid) {
-        return res.status(401).json({ message: 'Invalid 2FA code' });
-      }
-    }
-
-    // Reset failed login attempts
-    user.failedLoginAttempts = 0;
-    user.lockUntil = null;
-
-    // Generate new tokens
-    const { accessToken, refreshToken } = generateTokens(user._id);
-    user.refreshToken = refreshToken;
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    user.verificationExpires = undefined;
     await user.save();
 
-    res.json({
-      accessToken,
-      refreshToken,
-      user: {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        twoFactorEnabled: user.twoFactorEnabled
-      }
-    });
+    res.json({ message: 'Email verified successfully' });
   } catch (error) {
-    next(error);
+    logger.error('Email verification error:', error);
+    res.status(500).json({ message: 'Email verification failed' });
   }
 };
 
-export const setup2FA = async (req, res, next) => {
+// Request Password Reset
+export const requestPasswordReset = async (req, res) => {
   try {
-    const user = await User.findById(req.userId);
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const secret = speakeasy.generateSecret();
-    const otpauthUrl = speakeasy.otpauthURL({
-      secret: secret.base32,
-      label: user.email,
-      issuer: 'MyBarber.ai'
-    });
-
-    user.twoFactorSecret = secret.base32;
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    res.json({
-      secret: secret.base32,
-      qrCode: otpauthUrl
-    });
+    await sendPasswordResetEmail(email, resetToken);
+
+    res.json({ message: 'Password reset email sent' });
   } catch (error) {
-    next(error);
+    logger.error('Password reset request error:', error);
+    res.status(500).json({ message: 'Failed to send reset email' });
   }
 };
 
-export const verify2FA = async (req, res, next) => {
+// Reset Password
+export const resetPassword = async (req, res) => {
   try {
-    const { code } = req.body;
-    const user = await User.findById(req.userId);
-    
-    if (!user || !user.twoFactorSecret) {
-      return res.status(400).json({ message: '2FA not set up' });
-    }
+    const { token } = req.params;
+    const { password } = req.body;
 
-    const verified = speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
-      encoding: 'base32',
-      token: code
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
     });
 
-    if (!verified) {
-      return res.status(401).json({ message: 'Invalid verification code' });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired reset token' });
     }
 
-    user.twoFactorEnabled = true;
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
     await user.save();
 
-    res.json({ message: '2FA enabled successfully' });
+    res.json({ message: 'Password reset successful' });
   } catch (error) {
-    next(error);
+    logger.error('Password reset error:', error);
+    res.status(500).json({ message: 'Password reset failed' });
   }
 };
 
-export const disable2FA = async (req, res, next) => {
+// Refresh Token
+export const refreshToken = async (req, res) => {
   try {
-    const { code } = req.body;
-    const user = await User.findById(req.userId);
-    
-    if (!user || !user.twoFactorEnabled) {
-      return res.status(400).json({ message: '2FA not enabled' });
+    const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: 'Refresh token required' });
     }
 
-    const verified = speakeasy.totp.verify({
-      secret: user.twoFactorSecret,
-      encoding: 'base32',
-      token: code
-    });
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    const user = await User.findById(decoded.userId);
 
-    if (!verified) {
-      return res.status(401).json({ message: 'Invalid verification code' });
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(401).json({ message: 'Invalid refresh token' });
     }
 
-    user.twoFactorEnabled = false;
-    user.twoFactorSecret = undefined;
+    const tokens = generateTokens(user._id);
+    user.refreshToken = tokens.refreshToken;
     await user.save();
 
-    res.json({ message: '2FA disabled successfully' });
+    res.json(tokens);
   } catch (error) {
-    next(error);
+    logger.error('Token refresh error:', error);
+    res.status(401).json({ message: 'Invalid refresh token' });
   }
 };
