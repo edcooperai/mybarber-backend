@@ -14,32 +14,32 @@ const createLimiter = (options) => {
 };
 
 export const authLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  skipSuccessfulRequests: true
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5,  // Allow 5 requests per 15 minutes
+  skipSuccessfulRequests: true, // Do not count successful requests
 });
 
 export const apiLimiter = createLimiter({
-  windowMs: 15 * 60 * 1000,
-  max: 100
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100,  // Allow 100 requests per 15 minutes
 });
 
 export const appointmentsLimiter = createLimiter({
-  windowMs: 60 * 1000,
-  max: 20
+  windowMs: 60 * 1000, // 1 minute
+  max: 20,  // Allow 20 requests per minute
 });
 
 export const servicesLimiter = createLimiter({
-  windowMs: 60 * 1000,
-  max: 30
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,  // Allow 30 requests per minute
 });
 
 export const clientsLimiter = createLimiter({
-  windowMs: 60 * 1000,
-  max: 30
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,  // Allow 30 requests per minute
 });
 
 export const settingsLimiter = createLimiter({
-  windowMs: 60 * 1000,
-  max: 20
+  windowMs: 60 * 1000, // 1 minute
+  max: 20,  // Allow 20 requests per minute
 });
