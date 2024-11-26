@@ -2,7 +2,7 @@ import express from 'express';
 import { body } from 'express-validator';
 import { validateRequest } from '../middleware/validateRequest.js';
 import * as authController from '../controllers/authController.js';
-import { rateLimiter } from '../middleware/rateLimiter.js';
+import { authLimiter } from '../middleware/rateLimiter.js';  // Updated import to match the named export
 
 const router = express.Router();
 
@@ -27,7 +27,7 @@ router.get('/verify/:token', authController.verifyEmail);
 // Request Password Reset
 router.post(
   '/password-reset-request',
-  rateLimiter,
+  authLimiter,  // Use the authLimiter here
   [body('email').isEmail().normalizeEmail()],
   validateRequest,
   authController.requestPasswordReset
