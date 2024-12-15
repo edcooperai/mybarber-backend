@@ -17,9 +17,8 @@ import clientRoutes from './routes/clients.js';
 import serviceRoutes from './routes/services.js';
 import settingsRoutes from './routes/settings.js';
 
-dotenv.config();  // Make sure .env is loaded
-
-connectDB();  // Connect to the database
+dotenv.config();  // Load .env variables
+connectDB();      // Connect to MongoDB
 
 const app = express();
 
@@ -29,12 +28,20 @@ app.use(cors({
   origin: process.env.FRONTEND_URL,  // Frontend URL from .env
   credentials: true,
 }));
-
 app.use(helmet());
 app.use(mongoSanitize());
 app.use(xss());
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
 app.use(securityMiddleware);
+
+// Health check route (before rate limiting)
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ 
+    status: 'success', 
+    message: 'API is healthy!', 
+    timestamp: new Date().toISOString() 
+  });
+});
 
 // Rate Limiting
 app.use('/api/auth', authLimiter);
@@ -42,12 +49,7 @@ app.use('/api/appointments', appointmentsLimiter);
 app.use('/api/services', servicesLimiter);
 app.use('/api/clients', clientsLimiter);
 app.use('/api/settings', settingsLimiter);
-app.use(apiLimiter);
-
-// Health check route
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
+app.use(apiLimiter);  // Apply general rate limiting after specific limiters
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -55,6 +57,14 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/clients', clientRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/settings', settingsRoutes);
+
+// Catch-all for unmatched routes
+app.use((req, res) => {
+  res.status(404).json({
+    status: 'error',
+    message: 'Route not found',
+  });
+});
 
 // Global Error Handler
 app.use(errorHandler);
