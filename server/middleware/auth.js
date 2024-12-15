@@ -14,17 +14,18 @@ export const auth = (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.userId = decoded.userId;
+    req.userId = decoded.userId; // Attach the user ID to the request object
     next();
   } catch (error) {
     res.status(401).json({ message: 'Invalid token' });
   }
 };
 
-// Login route (typically where you'd authenticate and issue a JWT)
-router.post('/login', authLimiter, (req, res) => { // Use authLimiter here
+// Login route (authentication and JWT issuance)
+router.post('/login', authLimiter, (req, res) => {
   const { username, password } = req.body;
 
+  // Replace this with actual authentication logic
   if (username === 'validUsername' && password === 'validPassword') {
     const token = jwt.sign({ userId: 'someUserId' }, process.env.JWT_SECRET, {
       expiresIn: '1h',
