@@ -9,7 +9,11 @@ import { logger } from '../utils/logger.js';
 
 const connectDB = async () => {
   try {
+    if (!process.env.MONGODB_URI) {
+      throw new Error('MongoDB URI is not defined in .env');
+    }
     console.log('MongoDB URI:', process.env.MONGODB_URI); // Debugging line to check if URI is loaded
+
     const conn = await mongoose.connect(process.env.MONGODB_URI);
     logger.info(`MongoDB Connected: ${conn.connection.host}`);
   } catch (error) {
