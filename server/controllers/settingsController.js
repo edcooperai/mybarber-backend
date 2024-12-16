@@ -1,4 +1,4 @@
-import Settings from '../models/Settings.js';
+<content>import Settings from '../models/Settings.js';
 import { logger } from '../utils/logger.js';
 import crypto from 'crypto';
 
@@ -7,6 +7,7 @@ export const getSettings = async (req, res, next) => {
     let settings = await Settings.findOne({ userId: req.userId });
 
     if (!settings) {
+      // Create default settings if none exist
       settings = new Settings({
         userId: req.userId,
         bookingId: crypto.randomBytes(8).toString('hex'),
@@ -25,7 +26,6 @@ export const getSettings = async (req, res, next) => {
 
     res.json(settings);
   } catch (error) {
-    logger.error(`Error fetching settings: ${error.message}`);
     next(error);
   }
 };
@@ -41,7 +41,6 @@ export const updateSettings = async (req, res, next) => {
     logger.info(`Settings updated for user: ${req.userId}`);
     res.json(settings);
   } catch (error) {
-    logger.error(`Error updating settings: ${error.message}`);
     next(error);
   }
-};
+};</content>

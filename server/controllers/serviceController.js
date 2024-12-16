@@ -1,4 +1,4 @@
-import Service from '../models/Service.js';
+<content>import Service from '../models/Service.js';
 import { logger } from '../utils/logger.js';
 
 export const getServices = async (req, res, next) => {
@@ -78,4 +78,4 @@ export const deleteService = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+};</content>

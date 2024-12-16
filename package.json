@@ -1,54 +1,27 @@
 {
   "name": "mybarber-ai",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
+  "version": "1.0.0",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
-    "preview": "vite preview",
-    "server": "node server/index.js",
-    "start": "node server/index.js",
-    "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
-    "deploy": "vite build"
+    "build": "vite build",
+    "start": "vite",
+    "dev": "vite"
   },
   "dependencies": {
     "@react-oauth/google": "^0.12.1",
     "@stripe/stripe-js": "^3.0.7",
     "@tanstack/react-table": "^8.13.2",
     "axios": "^1.6.7",
-    "bcryptjs": "^2.4.3",
-    "cors": "^2.8.5",
     "date-fns": "^3.3.1",
-    "dotenv": "^16.4.5",
-    "express": "^4.18.3",
-    "express-mongo-sanitize": "^2.2.0",
-    "express-rate-limit": "^7.1.5",
-    "express-validator": "^7.0.1",
-    "gapi-script": "^1.2.0",
-    "helmet": "^7.1.0",
-    "ical-generator": "^6.0.1",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.344.0",
-    "mongodb": "^6.4.0",
-    "mongoose": "^8.2.1",
-    "morgan": "^1.10.0",
-    "node-ical": "^0.18.0",
-    "nodemailer": "^6.9.11",
-    "password-validator": "^5.3.0",
     "qrcode.react": "^3.1.0",
     "react": "^18.2.0",
     "react-colorful": "^5.6.1",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.22.3",
     "recharts": "^2.12.2",
-    "speakeasy": "^2.0.0",
-    "stripe": "^14.19.0",
-    "twilio": "^4.22.0",
-    "winston": "^3.11.0",
-    "xss-clean": "^0.1.4",
-    "zustand": "^4.5.2"
+    "typescript": "^5.2.2",
+    "zustand": "^4.5.2",
+    "vite": "^5.4.11" 
   },
   "devDependencies": {
     "@types/react": "^18.2.56",
@@ -57,15 +30,14 @@
     "@typescript-eslint/parser": "^7.0.2",
     "@vitejs/plugin-react": "^4.2.1",
     "autoprefixer": "^10.4.18",
-    "concurrently": "^8.2.2",
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
-    "nodemon": "^3.1.0",
     "postcss": "^8.4.35",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5.2.2",
-    "vite": "^5.1.4"
+    "tailwindcss": "^3.4.1"
+  },
+  "engines": {
+    "node": ">=18.20.5",
+    "npm": ">=8.0.0"
   }
 }
-

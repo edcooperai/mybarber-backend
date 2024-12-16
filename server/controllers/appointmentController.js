@@ -1,4 +1,4 @@
-import Appointment from '../models/Appointment.js';
+<content>import Appointment from '../models/Appointment.js';
 import { logger } from '../utils/logger.js';
 
 export const getAppointments = async (req, res, next) => {
@@ -82,4 +82,4 @@ export const deleteAppointment = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+};</content>
