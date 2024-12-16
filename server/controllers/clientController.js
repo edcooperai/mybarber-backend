@@ -1,4 +1,4 @@
-import Client from '../models/Client.js';
+<content>import Client from '../models/Client.js';
 import { logger } from '../utils/logger.js';
 
 export const getClients = async (req, res, next) => {
@@ -78,4 +78,4 @@ export const deleteClient = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
-};
+};</content>
