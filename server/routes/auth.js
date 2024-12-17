@@ -5,7 +5,7 @@ import { ipBlocker } from '../middleware/ipBlocker.js';
 import { refreshTokenMiddleware } from '../middleware/refreshToken.js';
 import { auth } from '../middleware/auth.js';
 import * as authController from '../controllers/authController.js';
-import rateLimit from 'express-rate-limit';  // Add rate limiting
+import rateLimit from 'express-rate-limit'; // Add rate limiting
 
 const router = express.Router();
 
