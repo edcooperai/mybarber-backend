@@ -21,6 +21,17 @@ router.post(
   authController.register
 );
 
+// Login
+router.post(
+  '/login',
+  [
+    body('email').isEmail().normalizeEmail(),
+    body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long')
+  ],
+  validateRequest,
+  authController.login  // Call the login controller function here
+);
+
 // Verify Email
 router.get('/verify/:token', authController.verifyEmail);
 
