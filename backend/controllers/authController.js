@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';  // Make sure bcrypt is installed for password hashing comparison
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from '../models/User.js';
@@ -68,6 +69,49 @@ export const register = async (req, res) => {
   } catch (error) {
     logger.error('Registration error:', error);
     res.status(500).json({ message: 'Registration failed' });
+  }
+};
+
+// **Login**
+export const login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Verify password
+    const isPasswordCorrect = await bcrypt.compare(password, user.password);
+    if (!isPasswordCorrect) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    // Check if email is verified
+    if (!user.isVerified) {
+      return res.status(400).json({ message: 'Email not verified' });
+    }
+
+    // Generate tokens
+    const { accessToken, refreshToken } = generateTokens(user._id);
+    user.refreshToken = refreshToken;
+    await user.save();
+
+    res.status(200).json({
+      accessToken,
+      refreshToken,
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        isVerified: user.isVerified
+      }
+    });
+  } catch (error) {
+    logger.error('Login error:', error);
+    res.status(500).json({ message: 'Login failed' });
   }
 };
 
