@@ -36,7 +36,7 @@ router.post(
 // Login endpoint with rate limiting and improved error handling
 router.post(
   '/login',
-  ipBlocker,
+  ipBlocker,  // Ensure this middleware is set up correctly in your app
   loginLimiter, // Apply rate limiting here
   [
     body('email').isEmail().normalizeEmail().withMessage('Invalid email address'),
